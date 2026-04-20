@@ -1,0 +1,20 @@
+# PDF & traitement texte
+pdfplumber==0.11.0
+langchain==0.1.20
+langchain-community==0.0.38
+
+# Embeddings (modèle français)
+sentence-transformers==2.7.0
+
+# Base vectorielle
+chromadb==0.4.24
+
+# LLM
+groq==0.8.0
+
+# Backend web
+flask==3.0.3
+flask-cors==4.0.0
+
+# Utilitaires
+python-dotenv==1.0.1

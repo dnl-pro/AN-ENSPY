@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Assistant AN — ENSPY</title>
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #080c14;
+      color: #e8eaf0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 28px;
+      background: #0d1220;
+      border-bottom: 1px solid #1e2535;
+      flex-shrink: 0;
+    }
+
+    .header-icon {
+      width: 42px; height: 42px;
+      background: #1a2540;
+      border: 1px solid #2a3a5c;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .header-icon svg { width: 22px; height: 22px; }
+
+    .header-text h1 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #e8eaf0;
+      letter-spacing: 0.01em;
+    }
+
+    .header-text p {
+      font-size: 12px;
+      color: #5a6a8a;
+      margin-top: 1px;
+    }
+
+    .status-dot {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #3ecf8e;
+    }
+
+    .dot {
+      width: 7px; height: 7px;
+      background: #3ecf8e;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+
+    /* ── Chat zone ── */
+    .chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 0;
+      scroll-behavior: smooth;
+    }
+
+    .chat::-webkit-scrollbar { width: 4px; }
+    .chat::-webkit-scrollbar-track { background: transparent; }
+    .chat::-webkit-scrollbar-thumb { background: #1e2535; border-radius: 4px; }
+
+    .inner {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* ── Welcome ── */
+    .welcome {
+      text-align: center;
+      padding: 48px 16px 24px;
+    }
+
+    .welcome-icon {
+      width: 64px; height: 64px;
+      background: #0f1e38;
+      border: 1px solid #1e3460;
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .welcome-icon svg { width: 32px; height: 32px; }
+
+    .welcome h2 {
+      font-size: 22px;
+      font-weight: 600;
+      color: #e8eaf0;
+      margin-bottom: 8px;
+    }
+
+    .welcome p {
+      font-size: 14px;
+      color: #5a6a8a;
+      line-height: 1.6;
+      max-width: 400px;
+      margin: 0 auto 28px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .chip {
+      background: #0d1220;
+      border: 1px solid #1e2d4a;
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 13px;
+      color: #8a9abf;
+      cursor: pointer;
+      transition: border-color .2s, color .2s, background .2s;
+    }
+
+    .chip:hover {
+      border-color: #3d6aff;
+      color: #7aa0ff;
+      background: #0a1428;
+    }
+
+    /* ── Messages ── */
+    .row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .row.user { flex-direction: row-reverse; }
+
+    .avatar {
+      width: 34px; height: 34px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .avatar svg { width: 18px; height: 18px; }
+
+    .row.user  .avatar { background: #1e3a8a; border: 1px solid #2a4fa0; }
+    .row.bot   .avatar { background: #0f2a1e; border: 1px solid #1a4a32; }
+
+    .bubble {
+      max-width: 72%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.75;
+    }
+
+    .row.user .bubble {
+      background: #1a2f6a;
+      border: 1px solid #2a4088;
+      color: #ccd9ff;
+      border-top-right-radius: 4px;
+    }
+
+    .row.bot .bubble {
+      background: #0d1a14;
+      border: 1px solid #1a3326;
+      color: #d4e8d8;
+      border-top-left-radius: 4px;
+    }
+
+    /* ── Typing indicator ── */
+    .typing-dots {
+      display: flex;
+      gap: 5px;
+      padding: 4px 0;
+      align-items: center;
+    }
+
+    .typing-dots span {
+      width: 7px; height: 7px;
+      background: #3ecf8e;
+      border-radius: 50%;
+      animation: bounce 1.3s infinite ease-in-out;
+    }
+
+    .typing-dots span:nth-child(2) { animation-delay: .18s; }
+    .typing-dots span:nth-child(3) { animation-delay: .36s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30%            { transform: translateY(-7px); }
+    }
+
+    /* ── Input ── */
+    .input-wrap {
+      flex-shrink: 0;
+      background: #0d1220;
+      border-top: 1px solid #1e2535;
+      padding: 16px 24px 20px;
+    }
+
+    .input-row {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      background: #111828;
+      border: 1px solid #1e2d45;
+      border-radius: 16px;
+      padding: 10px 12px;
+      transition: border-color .2s;
+    }
+
+    .input-row:focus-within { border-color: #3d6aff; }
+
+    textarea {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #e8eaf0;
+      font-size: 14px;
+      font-family: inherit;
+      resize: none;
+      min-height: 24px;
+      max-height: 120px;
+      line-height: 1.6;
+    }
+
+    textarea::placeholder { color: #3a4a6a; }
+
+    .send-btn {
+      width: 36px; height: 36px;
+      background: #3d6aff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s, transform .1s;
+      flex-shrink: 0;
+    }
+
+    .send-btn:hover   { background: #5580ff; }
+    .send-btn:active  { transform: scale(0.94); }
+    .send-btn:disabled { background: #1e2535; cursor: not-allowed; }
+
+    .send-btn svg { width: 16px; height: 16px; }
+
+    .hint {
+      text-align: center;
+      font-size: 11px;
+      color: #2a3a5a;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#5a9aff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+    </svg>
+  </div>
+  <div class="header-text">
+    <h1>Assistant Art Numérique</h1>
+    <p>ENSPY · Filière AN · Propulsé par Groq</p>
+  </div>
+  <div class="status-dot">
+    <div class="dot"></div>
+    En ligne
+  </div>
+</header>
+
+<div class="chat" id="chat">
+  <div class="inner" id="inner">
+    <div class="welcome" id="welcome">
+      <div class="welcome-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 16v-4M12 8h.01"/>
+        </svg>
+      </div>
+      <h2>Bonjour, comment puis-je t'aider ?</h2>
+      <p>Pose-moi n'importe quelle question sur la filière Art Numérique de l'ENSPY.</p>
+      <div class="chips">
+        <div class="chip" onclick="ask(this.innerText)">Quels sont les débouchés ?</div>
+        <div class="chip" onclick="ask(this.innerText)">Cours enseignés en AN ?</div>
+        <div class="chip" onclick="ask(this.innerText)">Conditions d'admission ?</div>
+        <div class="chip" onclick="ask(this.innerText)">Logiciels utilisés ?</div>
+        <div class="chip" onclick="ask(this.innerText)">Durée de la formation ?</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="input-wrap">
+  <div class="input-row">
+    <textarea
+      id="inp"
+      placeholder="Pose ta question…"
+      rows="1"
+      onkeydown="onKey(event)"
+      oninput="resize(this)"
+    ></textarea>
+    <button class="send-btn" id="btn" onclick="send()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </div>
+  <p class="hint">Entrée pour envoyer · Maj+Entrée pour aller à la ligne</p>
+</div>
+
+<script>
+  const chat  = document.getElementById("chat");
+  const inner = document.getElementById("inner");
+  const inp   = document.getElementById("inp");
+  const btn   = document.getElementById("btn");
+
+  const USER_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="#7aa0ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+  const BOT_ICON  = `<svg viewBox="0 0 24 24" fill="none" stroke="#3ecf8e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M12 11V7"/><circle cx="12" cy="5" r="2"/><path d="M8 15h.01M12 15h.01M16 15h.01"/></svg>`;
+
+  function resize(el) {
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 120) + "px";
+  }
+
+  function onKey(e) {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+  }
+
+  function ask(text) { inp.value = text; send(); }
+
+  function addMsg(role, html) {
+    const w = document.getElementById("welcome");
+    if (w) w.remove();
+
+    const row = document.createElement("div");
+    row.className = `row ${role}`;
+    row.innerHTML = `
+      <div class="avatar">${role === "user" ? USER_ICON : BOT_ICON}</div>
+      <div class="bubble">${html}</div>`;
+    inner.appendChild(row);
+    chat.scrollTop = chat.scrollHeight;
+    return row;
+  }
+
+  function showTyping() {
+    const row = document.createElement("div");
+    row.className = "row bot";
+    row.id = "typing";
+    row.innerHTML = `
+      <div class="avatar">${BOT_ICON}</div>
+      <div class="bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+    inner.appendChild(row);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function formatText(txt) {
+    return txt
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\n/g, "<br>");
+  }
+
+  async function send() {
+    const q = inp.value.trim();
+    if (!q) return;
+
+    inp.value = "";
+    inp.style.height = "auto";
+    btn.disabled = true;
+
+    addMsg("user", formatText(q));
+    showTyping();
+
+    try {
+      const res  = await fetch("/ask", {
+        method  : "POST",
+        headers : { "Content-Type": "application/json" },
+        body    : JSON.stringify({ question: q })
+      });
+      const data = await res.json();
+      document.getElementById("typing")?.remove();
+
+      if (data.error) {
+        addMsg("bot", "Erreur : " + data.error);
+      } else {
+        addMsg("bot", formatText(data.reponse));
+      }
+    } catch {
+      document.getElementById("typing")?.remove();
+      addMsg("bot", "Impossible de contacter le serveur.");
+    }
+
+    btn.disabled = false;
+    inp.focus();
+  }
+</script>
+</body>
+</html>
